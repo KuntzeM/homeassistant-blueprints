@@ -1,0 +1,53 @@
+blueprint:
+  name: Control climate if windows is open
+  description: Switch off climate if windows is open and switch back if closed
+  domain: automation
+  input:
+    contact_sensor:
+      name: Contact Sensor
+      description: "The window or door sensor that triggers the automation."
+      selector:
+        entity:
+          domain: binary_sensor
+    climate:
+      name: climate
+      description: thermostat
+      selector:
+        entity:
+          domain: climate
+
+trigger:
+  - platform: state
+    entity_id: !input contact_sensor
+    from: "off"
+    to: "on"
+  - platform: state
+    entity_id: !input contact_sensor
+    from: "on"
+    to: "off"
+
+action:
+  - choose:
+      - conditions:
+          - condition: state
+            entity_id: !input contact_sensor
+            state: "on"
+        sequence:
+          - service: climate.set_hvac_mode
+            target:
+              entity_id: !input climate
+            data:
+              hvac_mode: "off"
+      - conditions:
+          - condition: state
+            entity_id: !input contact_sensor
+            state: "off"
+        sequence:
+          - service: climate.set_hvac_mode
+            target:
+              entity_id: !input climate
+            data:
+              hvac_mode: auto
+    default: []
+
+mode: single
